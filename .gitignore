@@ -1,0 +1,30 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Swift
+.build/
+*.swiftmodule
+*.swiftdoc
+
+# Xcode
+*.xcodeproj/
+*.xcworkspace/
+DerivedData/
+
+# Build outputs
+dist/
+*.app/
+*.dmg
+
+# Logs
+*.log
+/tmp/keepawake_debug.log
+
+# IDE
+.vscode/
+.idea/
+
+# Config (user-specific)
+.keepawake.json

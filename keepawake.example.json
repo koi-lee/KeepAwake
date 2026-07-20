@@ -1,0 +1,9 @@
+{
+  "watchedApps": [
+    { "name": "ChatGPT", "bundleId": "com.openai.chat" },
+    { "name": "ChatGPT", "bundleId": "com.openai.codex" },
+    { "name": "ChatGPT", "bundleId": null }
+  ],
+  "checkInterval": 5.0,
+  "showNotifications": true
+}
