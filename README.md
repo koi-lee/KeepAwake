@@ -27,6 +27,24 @@
 2. 双击挂载，拖拽 `KeepAwake.app` 到 `Applications`
 3. 首次打开：系统设置 → 隐私与安全性 → 仍要打开
 
+### 首次打开被 macOS 拦截
+
+KeepAwake 当前使用 Ad-hoc 签名，尚未经过 Apple 公证，因此首次打开时 macOS 可能提示“无法验证开发者”或阻止运行。这不代表应用已经损坏。
+
+推荐按以下顺序处理：
+
+1. 确认已将 `KeepAwake.app` 从 DMG 拖入“应用程序”，不要直接在磁盘镜像中运行。
+2. 在 Finder 的“应用程序”中找到 KeepAwake，按住 Control 点击（或右键点击）→ **打开** → 再次选择 **打开**。
+3. 如果仍被拦截，进入 **系统设置 → 隐私与安全性**，向下找到 KeepAwake 的拦截提示，点击 **仍要打开**，验证密码或 Touch ID 后再次确认。
+
+如果以上入口没有出现，可在确认安装包来自本仓库官方 Release 后执行：
+
+```bash
+xattr -dr com.apple.quarantine /Applications/KeepAwake.app
+```
+
+该命令只会移除 KeepAwake 的下载隔离标记，不会修改应用功能。请勿对来源不明的 App 使用此命令。
+
 ### 编译运行
 
 ```bash
