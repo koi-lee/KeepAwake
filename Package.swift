@@ -13,7 +13,7 @@ let package = Package(
             dependencies: [],
             resources: [
                 .process("AppIcon.png"),
-                .process("appIcon2.png"),
+                .process("MenuBarIcon.png"),
             ]
         ),
     ]

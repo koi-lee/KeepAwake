@@ -48,6 +48,13 @@ enum ConfigLoader {
               let cfg = try? JSONDecoder().decode(AppConfig.self, from: data) else {
             return .default
         }
+        guard cfg.checkInterval >= 1 else {
+            return AppConfig(
+                watchedApps: cfg.watchedApps,
+                checkInterval: AppConfig.default.checkInterval,
+                showNotifications: cfg.showNotifications
+            )
+        }
         return cfg
     }
 
@@ -66,13 +73,18 @@ enum ConfigLoader {
     }
     
     /// 保存配置到文件
-    static func saveConfig(_ config: AppConfig) {
+    @discardableResult
+    static func saveConfig(_ config: AppConfig) -> Bool {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        if let data = try? encoder.encode(config) {
-            try? data.write(to: configPath)
+        do {
+            let data = try encoder.encode(config)
+            try data.write(to: configPath, options: .atomic)
+            liveConfig = config
+            return true
+        } catch {
+            print("[KeepAwake] 保存配置失败: \(error)")
+            return false
         }
-        // 刷新 liveConfig
-        liveConfig = config
     }
 }

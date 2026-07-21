@@ -131,10 +131,11 @@ final class AppSelectorWindowController: NSWindowController {
                     
                     let name = (item as NSString).deletingPathExtension
                     let bundleId = bundle.bundleIdentifier ?? ""
+                    guard !bundleId.isEmpty else { continue }
                     let icon = self?.loadAppIcon(path: appPath)
                     
                     // 跳过系统辅助进程
-                    if name.lowercased().contains("helper") && bundleId.isEmpty {
+                    if name.lowercased().contains("helper") {
                         continue
                     }
                     
@@ -145,7 +146,7 @@ final class AppSelectorWindowController: NSWindowController {
             // 去重（按 bundleId）
             var seen = Set<String>()
             apps = apps.filter { app in
-                let key = app.bundleId.isEmpty ? app.name : app.bundleId
+                let key = app.bundleId
                 if seen.contains(key) { return false }
                 seen.insert(key)
                 return true
@@ -198,7 +199,7 @@ final class AppSelectorWindowController: NSWindowController {
     @objc private func saveClicked() {
         let watchedApps = allApps
             .filter { selectedBundleIds.contains($0.bundleId) }
-            .map { WatchedApp(name: $0.name, bundleId: $0.bundleId.isEmpty ? nil : $0.bundleId) }
+            .map { WatchedApp(name: $0.name, bundleId: $0.bundleId) }
         onSave?(watchedApps)
         window?.close()
     }

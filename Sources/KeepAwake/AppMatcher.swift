@@ -22,8 +22,8 @@ enum AppMatcher {
         var seen: Set<String> = []
 
         for app in running {
-            guard let bundleId = app.bundleIdentifier,
-                  let name = app.localizedName else { continue }
+            guard let name = app.localizedName else { continue }
+            let bundleId = app.bundleIdentifier
 
             for watched in watchedApps {
                 var matched = false

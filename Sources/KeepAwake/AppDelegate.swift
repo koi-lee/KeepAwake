@@ -20,7 +20,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var isSleepGuardActive = false
     private var currentMatch: MatchResult = MatchResult(matchedNames: [])
 
-    private let config: AppConfig
+    private var config: AppConfig
     private let sleepGuard = SleepGuard()
 
     // 睡眠模式：false = 系统睡眠，true = 屏幕睡眠
@@ -37,18 +37,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // 菜单栏 App，但在 Dock 也显示图标（方便刘海屏用户找到）
         NSApp.setActivationPolicy(.regular)
         
-        // 调试日志写入文件
-        let logPath = "/tmp/keepawake_debug.log"
-        try? "[KeepAwake] applicationDidFinishLaunching started\n".write(toFile: logPath, atomically: true, encoding: .utf8)
-        
         setupStatusItem()
-        try? "[KeepAwake] setupStatusItem done\n".write(toFile: logPath, atomically: false, encoding: .utf8)
-        
         setupNotifications()
         updateIcon()
         tick()  // 立即检查一次
-        
-        try? "[KeepAwake] applicationDidFinishLaunching completed\n".write(toFile: logPath, atomically: false, encoding: .utf8)
 
         // 创建隐藏窗口：保证 App 与 Window Server 保持连接
         hiddenWindow = NSWindow(
@@ -84,13 +76,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             statusItem.isVisible = true
         }
         rebuildMenu()
-        if let button = statusItem.button {
-            // 只设置标题和图标，不设置 action（menu 会自动处理点击）
-            button.title = "☾"
-            let logPath = "/tmp/keepawake_debug.log"
-            let msg = "[KeepAwake] statusItem button created: title='\(button.title ?? "nil")'\n"
-            try? msg.write(toFile: logPath, atomically: false, encoding: .utf8)
-        }
+        // 初始化图标
+        updateIcon()
     }
 
     // ─── 状态轮询 ───────────────────────────────────────────
@@ -100,28 +87,35 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         if result.hasMatch && !isSleepGuardActive {
             // 目标启动 → 阻止睡眠
-            isSleepGuardActive = true
-            if displaySleepMode {
-                sleepGuard.preventDisplaySleep(reason: "KeepAwake: \(result.matchedNames.joined(separator: ", "))")
-            } else {
-                sleepGuard.prevent(reason: "KeepAwake: \(result.matchedNames.joined(separator: ", "))")
-            }
-            sendNotification(
-                title: "KeepAwake 已激活",
-                body: "检测到 \(result.matchedNames.joined(separator: ", "))，已阻止系统睡眠"
+            isSleepGuardActive = activateSleepGuard(
+                reason: "KeepAwake: \(result.matchedNames.joined(separator: ", "))"
             )
+            if isSleepGuardActive {
+                sendNotification(
+                    title: "KeepAwake 已激活",
+                    body: "检测到 \(result.matchedNames.joined(separator: ", "))，已阻止系统睡眠"
+                )
+            }
         } else if !result.hasMatch && isSleepGuardActive {
             // 目标退出 → 恢复睡眠
-            isSleepGuardActive = false
-            sleepGuard.allow()
-            sendNotification(
-                title: "KeepAwake 已休眠",
-                body: "目标应用已关闭，已恢复系统睡眠"
-            )
+            if sleepGuard.allow() {
+                isSleepGuardActive = false
+                sendNotification(
+                    title: "KeepAwake 已休眠",
+                    body: "目标应用已关闭，已恢复系统睡眠"
+                )
+            }
         }
 
         updateIcon()
         updateStatusText()
+    }
+
+    private func activateSleepGuard(reason: String) -> Bool {
+        if displaySleepMode {
+            return sleepGuard.preventDisplaySleep(reason: reason)
+        }
+        return sleepGuard.prevent(reason: reason)
     }
 
     @objc private func checkNow() {
@@ -170,15 +164,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func updateIcon() {
         guard let button = statusItem.button else { return }
 
-        // 使用 SF Symbol 作为菜单栏图标（黑白模板样式，跟随系统主题）
-        let symbolName = isSleepGuardActive ? "moon.fill" : "moon"
-        if let img = NSImage(systemSymbolName: symbolName, accessibilityDescription: "KeepAwake") {
-            let cfg = NSImage.SymbolConfiguration(pointSize: 16, weight: .regular)
-            button.image = img.withSymbolConfiguration(cfg)
-            // 使用 isTemplate = true 让图标变成黑白，跟随系统菜单栏样式
-            button.image?.isTemplate = true
-            // 激活时稍微高亮（系统会自动处理模板色）
-            button.appearsDisabled = false
+        // 使用自定义 PNG 图标（黑白模板样式）
+        if let iconPath = Bundle.main.path(forResource: "MenuBarIcon", ofType: "png"),
+           let iconImg = NSImage(contentsOfFile: iconPath) {
+            iconImg.size = NSSize(width: 18, height: 18)
+            iconImg.isTemplate = true
+            button.image = iconImg
+            button.imagePosition = .imageOnly
+            button.imageScaling = .scaleProportionallyUpOrDown
+        } else {
+            // 兜底：SF Symbol
+            let symbolName = isSleepGuardActive ? "moon.fill" : "moon"
+            if let img = NSImage(systemSymbolName: symbolName, accessibilityDescription: "KeepAwake") {
+                let cfg = NSImage.SymbolConfiguration(pointSize: 16, weight: .regular)
+                button.image = img.withSymbolConfiguration(cfg)
+                button.image?.isTemplate = true
+            }
         }
 
         updateStatusText()
@@ -271,7 +272,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(NSMenuItem.separator())
 
         // 操作项
-        menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(
             title: "立即检查 (R)",
             action: #selector(checkNow),
@@ -320,18 +320,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         rebuildMenu()
         // 如果当前活跃，重新注册断言
         if isSleepGuardActive {
-            sleepGuard.allow()
-            sleepGuard.prevent(reason: "KeepAwake (系统睡眠模式)")
+            if sleepGuard.allow() {
+                isSleepGuardActive = activateSleepGuard(reason: "KeepAwake (系统睡眠模式)")
+            }
         }
+        updateStatusText()
     }
 
     @objc private func setDisplaySleepMode() {
         displaySleepMode = true
         rebuildMenu()
         if isSleepGuardActive {
-            sleepGuard.allow()
-            sleepGuard.preventDisplaySleep(reason: "KeepAwake (屏幕睡眠模式)")
+            if sleepGuard.allow() {
+                isSleepGuardActive = activateSleepGuard(reason: "KeepAwake (屏幕睡眠模式)")
+            }
         }
+        updateStatusText()
     }
 
     // ─── 应用选择器 ────────────────────────────────────────
@@ -347,24 +351,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 checkInterval: self?.config.checkInterval ?? 5.0,
                 showNotifications: self?.config.showNotifications ?? true
             )
-            ConfigLoader.saveConfig(newConfig)
-            
-            // 更新当前配置并刷新
-            if let self = self {
-                // 重新加载配置
-                let updatedConfig = ConfigLoader.liveConfig
-                // 需要重新初始化 config，但 struct 不能改，所以重启 App 最简单
-                // 或者通过通知让用户重启
+            guard ConfigLoader.saveConfig(newConfig) else {
                 let alert = NSAlert()
-                alert.messageText = "配置已保存"
-                alert.informativeText = "应用列表已更新，请重启 KeepAwake 以生效。"
-                alert.alertStyle = .informational
-                alert.addButton(withTitle: "立即退出")
-                alert.addButton(withTitle: "稍后手动重启")
-                if alert.runModal() == .alertFirstButtonReturn {
-                    NSApp.terminate(nil)
-                }
+                alert.messageText = "配置保存失败"
+                alert.informativeText = "无法写入 ~/.keepawake.json，请检查文件权限后重试。"
+                alert.alertStyle = .warning
+                alert.runModal()
+                return
             }
+
+            self?.config = newConfig
+            self?.rebuildMenu()
+            self?.tick()
         }
         appSelectorWindowController?.showWindow(nil)
         NSApp.activate(ignoringOtherApps: true)
