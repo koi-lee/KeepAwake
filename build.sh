@@ -4,8 +4,8 @@ set -e
 PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
 BUILD_DIR="$PROJECT_DIR/dist"
 APP_NAME="KeepAwake"
-VERSION="1.0.0"
-BUILD_NUM="1"
+VERSION="1.1.0"
+BUILD_NUM="2"
 
 # ─── 清理 & 创建输出目录 ───────────────────────────────────
 rm -rf "$BUILD_DIR"
@@ -18,6 +18,7 @@ echo "🔨 编译 KeepAwake $VERSION ..."
 SOURCES=(
     "$PROJECT_DIR/Sources/KeepAwake/AppConfig.swift"
     "$PROJECT_DIR/Sources/KeepAwake/SleepGuard.swift"
+    "$PROJECT_DIR/Sources/KeepAwake/LidSleepGuard.swift"
     "$PROJECT_DIR/Sources/KeepAwake/AppMatcher.swift"
     "$PROJECT_DIR/Sources/KeepAwake/AppSelectorWindow.swift"
     "$PROJECT_DIR/Sources/KeepAwake/AppDelegate.swift"

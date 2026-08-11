@@ -14,10 +14,11 @@ import IOKit.pwr_mgt
 final class SleepGuard {
     private var assertionID: IOPMAssertionID = 0
     private(set) var isActive: Bool = false
+    private let lidGuard = LidSleepGuard()
 
     /// 阻止系统空闲睡眠（系统不会因空闲而进入睡眠，但合盖仍会睡眠）
     @discardableResult
-    func prevent(reason: String) -> Bool {
+    func prevent(reason: String, keepLidAwake: Bool = false) -> Bool {
         guard !isActive else { return true }
         let result = IOPMAssertionCreateWithName(
             kIOPMAssertionTypePreventUserIdleSystemSleep as CFString,
@@ -26,6 +27,16 @@ final class SleepGuard {
             &assertionID
         )
         if result == kIOReturnSuccess {
+            if keepLidAwake {
+                do {
+                    try lidGuard.start()
+                } catch {
+                    IOPMAssertionRelease(assertionID)
+                    assertionID = 0
+                    print("[KeepAwake] 合盖保活授权失败: \(error)")
+                    return false
+                }
+            }
             isActive = true
             print("[KeepAwake] 已阻止系统睡眠 (reason: \(reason))")
             return true
@@ -37,7 +48,7 @@ final class SleepGuard {
 
     /// 阻止屏幕睡眠（屏幕也不会熄灭）
     @discardableResult
-    func preventDisplaySleep(reason: String) -> Bool {
+    func preventDisplaySleep(reason: String, keepLidAwake: Bool = false) -> Bool {
         guard !isActive else { return true }
         let result = IOPMAssertionCreateWithName(
             kIOPMAssertionTypePreventUserIdleDisplaySleep as CFString,
@@ -47,6 +58,7 @@ final class SleepGuard {
         )
         if result == kIOReturnSuccess {
             isActive = true
+            if keepLidAwake { do { try lidGuard.start() } catch { print("[KeepAwake] 合盖保活授权失败: \(error)") } }
             print("[KeepAwake] 已阻止屏幕睡眠 (reason: \(reason))")
             return true
         } else {
@@ -61,6 +73,7 @@ final class SleepGuard {
         guard isActive else { return true }
         let result = IOPMAssertionRelease(assertionID)
         if result == kIOReturnSuccess {
+            lidGuard.stop()
             print("[KeepAwake] 已恢复系统睡眠")
             isActive = false
             assertionID = 0

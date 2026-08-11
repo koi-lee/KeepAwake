@@ -6,7 +6,14 @@
 //
 
 import Cocoa
+import QuartzCore
 import UserNotifications
+
+private enum SleepMode {
+    case system
+    case display
+    case lid
+}
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     // ─── 状态 ───────────────────────────────────────────────
@@ -23,8 +30,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var config: AppConfig
     private let sleepGuard = SleepGuard()
 
-    // 睡眠模式：false = 系统睡眠，true = 屏幕睡眠
-    private var displaySleepMode = false
+    private var sleepMode: SleepMode = .system
 
     // ─── 初始化 ─────────────────────────────────────────────
     override init() {
@@ -90,6 +96,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             isSleepGuardActive = activateSleepGuard(
                 reason: "KeepAwake: \(result.matchedNames.joined(separator: ", "))"
             )
+            if !isSleepGuardActive && sleepMode == .lid {
+                handleLidModeActivationFailure()
+            }
             if isSleepGuardActive {
                 sendNotification(
                     title: "KeepAwake 已激活",
@@ -112,10 +121,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func activateSleepGuard(reason: String) -> Bool {
-        if displaySleepMode {
+        switch sleepMode {
+        case .system:
+            return sleepGuard.prevent(reason: reason)
+        case .display:
             return sleepGuard.preventDisplaySleep(reason: reason)
+        case .lid:
+            return sleepGuard.prevent(reason: reason, keepLidAwake: true)
         }
-        return sleepGuard.prevent(reason: reason)
     }
 
     @objc private func checkNow() {
@@ -190,7 +203,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             let names = currentMatch.matchedNames.isEmpty
                 ? "目标运行中"
                 : currentMatch.matchedNames.joined(separator: ", ")
-            let modeStr = displaySleepMode ? "屏幕睡眠" : "系统睡眠"
+            let modeStr: String
+            switch sleepMode {
+            case .system: modeStr = "系统睡眠"
+            case .display: modeStr = "屏幕睡眠"
+            case .lid: modeStr = "合盖保活"
+            }
             statusMenuItem.title = "✓ 阻止\(modeStr)中 · \(names)"
             statusMenuItem.image = NSImage(systemSymbolName: "checkmark.circle.fill", accessibilityDescription: nil)?
                 .withSymbolConfiguration(.init(pointSize: 12, weight: .regular))
@@ -201,9 +219,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         // 更新睡眠模式菜单项
         if let submenu = sleepModeMenuItem.submenu {
-            for (i, item) in submenu.items.enumerated() {
-                if i == 0 { item.state = displaySleepMode ? .off : .on }
-                if i == 1 { item.state = displaySleepMode ? .on : .off }
+            for (index, item) in submenu.items.enumerated() {
+                item.state = (index == 0 && sleepMode == .system) ||
+                    (index == 1 && sleepMode == .display) ||
+                    (index == 2 && sleepMode == .lid) ? .on : .off
             }
         }
     }
@@ -232,16 +251,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             keyEquivalent: ""
         )
         systemSleepItem.target = self
-        systemSleepItem.state = displaySleepMode ? .off : .on
+        systemSleepItem.state = sleepMode == .system ? .on : .off
         let displaySleepItem = NSMenuItem(
             title: "阻止屏幕睡眠（屏幕常亮）",
             action: #selector(setDisplaySleepMode),
             keyEquivalent: ""
         )
         displaySleepItem.target = self
-        displaySleepItem.state = displaySleepMode ? .on : .off
+        displaySleepItem.state = sleepMode == .display ? .on : .off
+        let lidSleepItem = NSMenuItem(
+            title: "合盖保活（需要管理员授权）",
+            action: #selector(setLidSleepMode),
+            keyEquivalent: ""
+        )
+        lidSleepItem.target = self
+        lidSleepItem.state = sleepMode == .lid ? .on : .off
         sleepSubmenu.addItem(systemSleepItem)
         sleepSubmenu.addItem(displaySleepItem)
+        sleepSubmenu.addItem(lidSleepItem)
         sleepModeMenuItem = NSMenuItem(title: "睡眠模式", action: nil, keyEquivalent: "")
         sleepModeMenuItem.submenu = sleepSubmenu
         menu.addItem(sleepModeMenuItem)
@@ -316,26 +343,53 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     // ─── 菜单操作 ────────────────────────────────────────────
     @objc private func setSystemSleepMode() {
-        displaySleepMode = false
-        rebuildMenu()
-        // 如果当前活跃，重新注册断言
-        if isSleepGuardActive {
-            if sleepGuard.allow() {
-                isSleepGuardActive = activateSleepGuard(reason: "KeepAwake (系统睡眠模式)")
-            }
-        }
-        updateStatusText()
+        setSleepMode(.system, reason: "KeepAwake (系统睡眠模式)")
     }
 
     @objc private func setDisplaySleepMode() {
-        displaySleepMode = true
+        setSleepMode(.display, reason: "KeepAwake (屏幕睡眠模式)")
+    }
+
+    @objc private func setLidSleepMode() {
+        setSleepMode(.lid, reason: "KeepAwake (合盖保活模式)")
+    }
+
+    private func setSleepMode(_ newMode: SleepMode, reason: String) {
+        guard sleepMode != newMode else { return }
+        sleepMode = newMode
         rebuildMenu()
         if isSleepGuardActive {
             if sleepGuard.allow() {
-                isSleepGuardActive = activateSleepGuard(reason: "KeepAwake (屏幕睡眠模式)")
+                isSleepGuardActive = activateSleepGuard(reason: reason)
+                if !isSleepGuardActive && sleepMode == .lid {
+                    handleLidModeActivationFailure()
+                }
             }
         }
         updateStatusText()
+        animateModeChangeFeedback()
+    }
+
+    private func animateModeChangeFeedback() {
+        guard !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion,
+              let button = statusItem.button else { return }
+        button.alphaValue = 0.55
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.14
+            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            button.animator().alphaValue = 1
+        }
+    }
+
+    private func handleLidModeActivationFailure() {
+        sleepMode = .system
+        rebuildMenu()
+        updateStatusText()
+        let alert = NSAlert()
+        alert.messageText = "未能启用合盖保活"
+        alert.informativeText = "需要完成管理员授权才能启用合盖保活。KeepAwake 已恢复为“阻止系统睡眠”模式。"
+        alert.alertStyle = .warning
+        alert.runModal()
     }
 
     // ─── 应用选择器 ────────────────────────────────────────
