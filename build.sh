@@ -31,7 +31,7 @@ TMP_BINARY="$BUILD_DIR/${APP_NAME}-universal"
 for ARCH in arm64 x86_64; do
     OUTPUT="$ARM_BINARY"
     if [ "$ARCH" = "x86_64" ]; then OUTPUT="$INTEL_BINARY"; fi
-    swiftc \
+    xcrun --sdk macosx swiftc \
         -target "${ARCH}-apple-macos13.0" \
         -framework Cocoa -framework SwiftUI -framework IOKit \
         -o "$OUTPUT" \
