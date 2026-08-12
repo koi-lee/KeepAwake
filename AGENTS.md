@@ -24,3 +24,10 @@
 3. 发布应用时同步提交并部署网站，最后验证 GitHub Release 与线上页面。
 4. 未经用户明确授权，不提交、推送、创建 Release 或触发生产部署。
 
+## GitHub 推送认证
+
+- 普通 Git 提交与推送优先使用本机已有的 GitHub SSH 公钥，不依赖 GitHub CLI Token。
+- GitHub SSH 配置位于 `~/.ssh/config`，当前 `github.com` 使用 `~/.ssh/id_ed25519_github_nopass`。
+- KeepAwake 的远端应保持为 `git@github.com:koi-lee/KeepAwake.git`。
+- 推送异常时先检查 `git remote -v`，必要时使用 `ssh -T -o BatchMode=yes git@github.com` 验证身份；不要读取或输出私钥内容。
+- `gh auth status` 显示 Token 失效，只表示 GitHub API/CLI 操作可能不可用，不代表 SSH `git push` 不能使用。只有创建 Release、查询 Actions 等必须调用 GitHub API 的操作才需要修复 `gh` 登录。
