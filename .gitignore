@@ -9,7 +9,8 @@
 *.swiftdoc
 
 # Xcode
-*.xcodeproj/
+*.xcodeproj/*
+!KeepAwake.xcodeproj/project.pbxproj
 *.xcworkspace/
 DerivedData/
 
@@ -28,3 +29,6 @@ dist/
 
 # Config (user-specific)
 .keepawake.json
+
+# Local release notes (do not publish)
+/docs/AppStore/KeepAwake-AppStore-上架流程.md

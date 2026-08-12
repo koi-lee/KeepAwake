@@ -322,6 +322,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         editItem.target = self
         menu.addItem(editItem)
 
+        let networkLogItem = NSMenuItem(
+            title: "查看合盖网络诊断日志…",
+            action: #selector(openNetworkLog),
+            keyEquivalent: ""
+        )
+        networkLogItem.target = self
+        menu.addItem(networkLogItem)
+
         menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(
             title: "关于 KeepAwake",
@@ -424,6 +432,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func openConfig() {
         ConfigLoader.openInEditor()
+    }
+
+    @objc private func openNetworkLog() {
+        NetworkPathLogger.ensureLogExists()
+        NSWorkspace.shared.open(NetworkPathLogger.logURL)
     }
 
     @objc private func showAbout() {

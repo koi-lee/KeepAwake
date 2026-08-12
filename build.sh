@@ -4,8 +4,8 @@ set -e
 PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
 BUILD_DIR="$PROJECT_DIR/dist"
 APP_NAME="KeepAwake"
-VERSION="1.1.0"
-BUILD_NUM="2"
+VERSION="1.1.1"
+BUILD_NUM="3"
 
 # ─── 清理 & 创建输出目录 ───────────────────────────────────
 rm -rf "$BUILD_DIR"
@@ -33,7 +33,7 @@ for ARCH in arm64 x86_64; do
     if [ "$ARCH" = "x86_64" ]; then OUTPUT="$INTEL_BINARY"; fi
     xcrun --sdk macosx swiftc \
         -target "${ARCH}-apple-macos13.0" \
-        -framework Cocoa -framework SwiftUI -framework IOKit \
+        -framework Cocoa -framework SwiftUI -framework IOKit -framework Network \
         -o "$OUTPUT" \
         "${SOURCES[@]}"
 done
