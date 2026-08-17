@@ -211,3 +211,10 @@ SOFTWARE.
 
 - 灵感来自 [Amphetamine](https://apps.apple.com/app/amphetamine/id937984704)
 - 使用 macOS AppKit 与 IOKit 实现菜单栏和睡眠控制
+
+## 项目文档
+
+- [协作规则](AGENTS.md)
+- [测试指南](TESTING.md)
+- [发布说明](DEPLOYMENT.md)
+- [环境变量说明](.env.example)
