@@ -4,8 +4,8 @@ set -e
 PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
 BUILD_DIR="$PROJECT_DIR/dist"
 APP_NAME="KeepAwake"
-VERSION="1.1.1"
-BUILD_NUM="3"
+VERSION="1.0.0"
+BUILD_NUM="4"
 
 # ─── 清理 & 创建输出目录 ───────────────────────────────────
 rm -rf "$BUILD_DIR"
@@ -85,7 +85,7 @@ cat > "$BUILD_DIR/$APP_NAME.app/Contents/Info.plist" << PLIST
     <key>CFBundleIconFile</key>
     <string>AppIcon.icns</string>
     <key>CFBundleIdentifier</key>
-    <string>com.keepawake.app</string>
+    <string>com.starshoreai.keepawake</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>

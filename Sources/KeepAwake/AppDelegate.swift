@@ -339,7 +339,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.items.last?.target = self
 
         let quitItem = NSMenuItem(
-            title: "退出 KeepAwake (Q)",
+            title: "Quit KeepAwake",
             action: #selector(quitApp),
             keyEquivalent: "q"
         )
