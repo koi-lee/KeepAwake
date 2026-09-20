@@ -10,8 +10,7 @@ import IOKit.pwr_mgt
 import Network
 
 final class NetworkPathLogger {
-    static let logURL = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask)[0]
-        .appendingPathComponent("Logs/KeepAwake/network.log")
+    static let logURL = ConfigLoader.networkLogPath
 
     private let queue = DispatchQueue(label: "com.keepawake.network-path-logger")
     private var monitor: NWPathMonitor?
@@ -54,10 +53,20 @@ final class NetworkPathLogger {
             do {
                 try handle.seekToEnd()
                 try handle.write(contentsOf: data)
+                try handle.close()
+                Self.trimIfNeeded()
             } catch {
                 print("[KeepAwake] 写入网络诊断日志失败: \(error)")
             }
         }
+    }
+
+    private static func trimIfNeeded() {
+        let limit = max(64 * 1024, ConfigLoader.liveConfig.logSizeLimitBytes)
+        guard let attributes = try? FileManager.default.attributesOfItem(atPath: logURL.path),
+              let size = attributes[.size] as? NSNumber, size.intValue > limit,
+              let data = try? Data(contentsOf: logURL) else { return }
+        try? data.suffix(limit).write(to: logURL, options: .atomic)
     }
 }
 
@@ -143,8 +152,17 @@ final class SleepGuard {
             &assertionID
         )
         if result == kIOReturnSuccess {
+            if keepLidAwake {
+                do {
+                    try lidGuard.start()
+                } catch {
+                    IOPMAssertionRelease(assertionID)
+                    assertionID = 0
+                    print("[KeepAwake] 合盖保活授权失败: \(error)")
+                    return false
+                }
+            }
             isActive = true
-            if keepLidAwake { do { try lidGuard.start() } catch { print("[KeepAwake] 合盖保活授权失败: \(error)") } }
             print("[KeepAwake] 已阻止屏幕睡眠 (reason: \(reason))")
             return true
         } else {
@@ -157,20 +175,25 @@ final class SleepGuard {
     @discardableResult
     func allow() -> Bool {
         guard isActive else { return true }
-        let sleepResult = IOPMAssertionRelease(assertionID)
+        let sleepResult = assertionID == 0
+            ? kIOReturnSuccess
+            : IOPMAssertionRelease(assertionID)
         let networkResult = networkAssertionID == 0
             ? kIOReturnSuccess
             : IOPMAssertionRelease(networkAssertionID)
         lidGuard.stop()
         networkLogger.stop()
-        assertionID = 0
-        networkAssertionID = 0
+        if sleepResult == kIOReturnSuccess {
+            assertionID = 0
+        }
+        if networkResult == kIOReturnSuccess {
+            networkAssertionID = 0
+        }
         if sleepResult == kIOReturnSuccess && networkResult == kIOReturnSuccess {
             print("[KeepAwake] 已恢复系统睡眠")
             isActive = false
             return true
         }
-        isActive = false
         print("[KeepAwake] 恢复系统睡眠失败，sleep=\(sleepResult), network=\(networkResult)")
         return false
     }

@@ -4,7 +4,14 @@
 
 ```bash
 swift build
+swift test
 ./build.sh
+```
+
+如果直接运行 SwiftPM 受到本机模块缓存权限限制，可改用 Xcode 构建：
+
+```bash
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -project KeepAwake.xcodeproj -scheme KeepAwake -configuration Debug -derivedDataPath /private/tmp/KeepAwake-DerivedData CODE_SIGNING_ALLOWED=NO build
 ```
 
 ## 本机功能验证
@@ -14,7 +21,11 @@ swift build
 3. 退出目标 App，确认守护释放并按设置发送通知。
 4. 分别验证系统睡眠、屏幕睡眠和合盖保活模式。
 5. 验证配置保存、重启恢复、应用搜索和多显示器/全屏空间显示。
-6. 合盖模式必须在连接电源、获得管理员授权的真实 Mac 上验证。
+6. 分别验证手动保活 30 分钟、默认时长、一直保活和停止会话。
+7. 在电池供电和低电量条件下验证电源安全策略；确认停止保活后恢复正常睡眠行为。
+8. 合盖模式必须在连接电源、获得管理员授权的真实 Mac 上验证。
+9. 在“设置…”中切换开机启动、修改检查间隔/默认时长/日志上限，确认重启后配置保留。
+10. 卸载或更新被监控 App 后，确认状态行提示重新识别，重新勾选后恢复自动保活。
 
 ## 发布前检查
 
@@ -24,4 +35,3 @@ codesign --verify --deep --strict dist/KeepAwake.app
 ```
 
 模拟器或单纯编译通过不能替代真实 macOS 电源行为验证。
-

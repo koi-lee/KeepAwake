@@ -4,8 +4,30 @@ set -e
 PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
 BUILD_DIR="$PROJECT_DIR/dist"
 APP_NAME="KeepAwake"
-VERSION="1.0.0"
-BUILD_NUM="4"
+VERSION="2.0.2"
+BUILD_NUM="20"
+MIN_MACOS_VERSION="13.0"
+EXPECTED_TEAM_ID="4BHPD976HX"
+EXPECTED_SIGNING_IDENTITY="Developer ID Application: ZEAN LI ($EXPECTED_TEAM_ID)"
+DMG_SIGNING_STATUS="Developer ID 签名 · 未经 Apple 公证"
+BUILD_DMG=false
+if [ "${1:-}" = "--dmg" ]; then
+    BUILD_DMG=true
+fi
+
+# 本地构建仍默认 Ad-hoc；正式 DMG 必须使用更名后的 Developer ID 证书。
+SIGNING_IDENTITY="${KEEP_AWAKE_SIGNING_IDENTITY:--}"
+if [ "$BUILD_DMG" = true ]; then
+    SIGNING_IDENTITY="${KEEP_AWAKE_SIGNING_IDENTITY:-$EXPECTED_SIGNING_IDENTITY}"
+    if [ "$SIGNING_IDENTITY" != "$EXPECTED_SIGNING_IDENTITY" ]; then
+        echo "❌ 正式构建拒绝：签名身份必须是 $EXPECTED_SIGNING_IDENTITY" >&2
+        exit 1
+    fi
+    security find-identity -v -p codesigning | grep -Fq "\"$EXPECTED_SIGNING_IDENTITY\"" || {
+        echo "❌ 未找到有效证书：$EXPECTED_SIGNING_IDENTITY" >&2
+        exit 1
+    }
+fi
 
 # ─── 清理 & 创建输出目录 ───────────────────────────────────
 rm -rf "$BUILD_DIR"
@@ -17,10 +39,16 @@ echo "🔨 编译 KeepAwake $VERSION ..."
 # 同时编译 Apple Silicon 与 Intel，合成 Universal 2 安装包
 SOURCES=(
     "$PROJECT_DIR/Sources/KeepAwake/AppConfig.swift"
+    "$PROJECT_DIR/Sources/KeepAwake/Session.swift"
+    "$PROJECT_DIR/Sources/KeepAwake/PowerSafety.swift"
+    "$PROJECT_DIR/Sources/KeepAwake/LoginItemManager.swift"
+    "$PROJECT_DIR/Sources/KeepAwake/SettingsWindow.swift"
+    "$PROJECT_DIR/Sources/KeepAwake/UsageGuideWindow.swift"
     "$PROJECT_DIR/Sources/KeepAwake/SleepGuard.swift"
     "$PROJECT_DIR/Sources/KeepAwake/LidSleepGuard.swift"
     "$PROJECT_DIR/Sources/KeepAwake/AppMatcher.swift"
     "$PROJECT_DIR/Sources/KeepAwake/AppSelectorWindow.swift"
+    "$PROJECT_DIR/Sources/KeepAwake/SessionStatusWindow.swift"
     "$PROJECT_DIR/Sources/KeepAwake/AppDelegate.swift"
     "$PROJECT_DIR/Sources/KeepAwake/main.swift"
 )
@@ -32,7 +60,7 @@ for ARCH in arm64 x86_64; do
     OUTPUT="$ARM_BINARY"
     if [ "$ARCH" = "x86_64" ]; then OUTPUT="$INTEL_BINARY"; fi
     xcrun --sdk macosx swiftc \
-        -target "${ARCH}-apple-macos13.0" \
+        -target "${ARCH}-apple-macos${MIN_MACOS_VERSION}" \
         -framework Cocoa -framework SwiftUI -framework IOKit -framework Network \
         -o "$OUTPUT" \
         "${SOURCES[@]}"
@@ -43,6 +71,7 @@ lipo -create "$ARM_BINARY" "$INTEL_BINARY" -output "$TMP_BINARY"
 mkdir -p "$BUILD_DIR/$APP_NAME.app/Contents/MacOS"
 cp "$TMP_BINARY" "$BUILD_DIR/$APP_NAME.app/Contents/MacOS/$APP_NAME"
 chmod +x "$BUILD_DIR/$APP_NAME.app/Contents/MacOS/$APP_NAME"
+ICON_FILE="AppIcon.png"
 
 # ─── 资源文件（图标 PNG） ─────────────────────────────────
 mkdir -p "$BUILD_DIR/$APP_NAME.app/Contents/Resources"
@@ -61,7 +90,12 @@ if [ -f "$ICON_PNG" ]; then
     sips -z 512 512   "$ICON_PNG" --out "$ICONSET_DIR/icon_256x256@2x.png" >/dev/null
     sips -z 512 512   "$ICON_PNG" --out "$ICONSET_DIR/icon_512x512.png" >/dev/null
     cp "$ICON_PNG" "$ICONSET_DIR/icon_512x512@2x.png"
-    iconutil -c icns "$ICONSET_DIR" -o "$BUILD_DIR/$APP_NAME.app/Contents/Resources/AppIcon.icns"
+    if iconutil -c icns "$ICONSET_DIR" -o "$BUILD_DIR/$APP_NAME.app/Contents/Resources/AppIcon.icns"; then
+        ICON_FILE="AppIcon.icns"
+    else
+        echo "⚠️  当前系统无法转换 ICNS，回退使用 PNG 图标"
+        cp "$ICON_PNG" "$BUILD_DIR/$APP_NAME.app/Contents/Resources/AppIcon.png"
+    fi
     rm -rf "$ICONSET_DIR"
 fi
 # 菜单栏图标 (64x64 黑白模板)
@@ -83,7 +117,7 @@ cat > "$BUILD_DIR/$APP_NAME.app/Contents/Info.plist" << PLIST
     <key>CFBundleExecutable</key>
     <string>KeepAwake</string>
     <key>CFBundleIconFile</key>
-    <string>AppIcon.icns</string>
+    <string>$ICON_FILE</string>
     <key>CFBundleIdentifier</key>
     <string>com.starshoreai.keepawake</string>
     <key>CFBundleInfoDictionaryVersion</key>
@@ -97,13 +131,15 @@ cat > "$BUILD_DIR/$APP_NAME.app/Contents/Info.plist" << PLIST
     <key>CFBundleVersion</key>
     <string>$BUILD_NUM</string>
     <key>LSMinimumSystemVersion</key>
-    <string>13.0</string>
+    <string>$MIN_MACOS_VERSION</string>
     <key>LSMultipleInstancesProhibited</key>
     <true/>
     <key>LSUIElement</key>
     <false/>
     <key>NSHighResolutionCapable</key>
     <true/>
+    <key>NSUserNotificationAlertStyle</key>
+    <string>alert</string>
     <key>NSPrincipalClass</key>
     <string>NSApplication</string>
 </dict>
@@ -113,34 +149,67 @@ PLIST
 # ─── 清理 quarantine 属性 ─────────────────────────────────
 xattr -cr "$BUILD_DIR/$APP_NAME.app"
 
-# ─── Ad-hoc 签名 ──────────────────────────────────────────
-codesign --force --deep --sign - "$BUILD_DIR/$APP_NAME.app"
+# ─── 签名 ────────────────────────────────────────────────
+# 本地开发默认 Ad-hoc；正式分发时传入 Developer ID Application 身份。
+echo "🔐 签名身份: $SIGNING_IDENTITY"
+if [ "$SIGNING_IDENTITY" = "-" ]; then
+    codesign --force --deep --sign "$SIGNING_IDENTITY" "$BUILD_DIR/$APP_NAME.app"
+else
+    codesign --force --deep --options runtime --timestamp --sign "$SIGNING_IDENTITY" "$BUILD_DIR/$APP_NAME.app"
+fi
 codesign --verify --deep --strict "$BUILD_DIR/$APP_NAME.app"
+
+if [ "$BUILD_DMG" = true ]; then
+    SIGNATURE_DETAILS="$(codesign -dvvv "$BUILD_DIR/$APP_NAME.app" 2>&1)"
+    grep -Fq "Authority=$EXPECTED_SIGNING_IDENTITY" <<<"$SIGNATURE_DETAILS" || {
+        echo "❌ 正式构建拒绝：产物证书姓名不正确" >&2
+        exit 1
+    }
+    grep -Fq "TeamIdentifier=$EXPECTED_TEAM_ID" <<<"$SIGNATURE_DETAILS" || {
+        echo "❌ 正式构建拒绝：产物 Team ID 不正确" >&2
+        exit 1
+    }
+fi
 
 echo "✅ 编译完成: $BUILD_DIR/$APP_NAME.app"
 echo ""
 
 # ─── 参数处理：--dmg ─────────────────────────────────────
-if [ "$1" == "--dmg" ]; then
+if [ "$BUILD_DMG" = true ]; then
     echo "📦 正在创建 DMG 安装包 ..."
 
     DMG_STAGING="$BUILD_DIR/dmg-staging"
     DMG_FILE="$BUILD_DIR/${APP_NAME}.dmg"
 
     rm -rf "$DMG_STAGING" "$DMG_FILE"
-    mkdir -p "$DMG_STAGING"
+    mkdir -p "$DMG_STAGING/.background"
     cp -R "$BUILD_DIR/$APP_NAME.app" "$DMG_STAGING/"
     ln -s /Applications "$DMG_STAGING/Applications"
 
-    # UDZO = 压缩只读格式
+    DMG_METADATA="版本 $VERSION ($BUILD_NUM)  ·  macOS ${MIN_MACOS_VERSION}+  ·  Universal 2 (Apple Silicon + Intel)  ·  $DMG_SIGNING_STATUS"
+    DMG_BACKGROUND_TOOL="$BUILD_DIR/create-dmg-background"
+    xcrun --sdk macosx swiftc \
+        -framework AppKit \
+        "$PROJECT_DIR/Scripts/DMGBackground.swift" \
+        -o "$DMG_BACKGROUND_TOOL"
+    "$DMG_BACKGROUND_TOOL" \
+        "$DMG_STAGING/.background/DMGBackground.png" \
+        "$DMG_METADATA"
+    chmod 644 "$DMG_STAGING/.background/DMGBackground.png"
+    if [ -f "$PROJECT_DIR/Scripts/DMG.DS_Store" ]; then
+        cp "$PROJECT_DIR/Scripts/DMG.DS_Store" "$DMG_STAGING/.DS_Store"
+    fi
+
+    # 使用已在本机 Finder 验证过的 .DS_Store 模板，避免 CI 无桌面会话时依赖 Finder AppleScript。
     hdiutil create \
-        -volname "KeepAwake" \
+        -volname "$APP_NAME" \
         -srcfolder "$DMG_STAGING" \
         -ov \
         -format UDZO \
-        "$DMG_FILE"
+        -ov \
+        "$DMG_FILE" >/dev/null
 
-    rm -rf "$DMG_STAGING"
+    rm -rf "$DMG_STAGING" "$DMG_BACKGROUND_TOOL"
 
     DMG_SIZE=$(du -h "$DMG_FILE" | cut -f1)
     echo "✅ DMG 创建成功: $DMG_FILE ($DMG_SIZE)"

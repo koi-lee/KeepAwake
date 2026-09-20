@@ -10,6 +10,7 @@ import Cocoa
 struct MatchResult {
     /// 匹配到的显示名列表
     let matchedNames: [String]
+    let staleBundleNames: [String]
     /// 是否有任意一个目标 App 在运行
     var hasMatch: Bool { !matchedNames.isEmpty }
 }
@@ -20,6 +21,7 @@ enum AppMatcher {
         let running = NSWorkspace.shared.runningApplications
         var hits: [String] = []
         var seen: Set<String> = []
+        var foundBundleIDs: Set<String> = []
 
         for app in running {
             guard let name = app.localizedName else { continue }
@@ -31,6 +33,7 @@ enum AppMatcher {
                 // 1. 优先精确匹配 bundleId
                 if let wbId = watched.bundleId, wbId == bundleId {
                     matched = true
+                    foundBundleIDs.insert(wbId)
                 }
                 // 2. 没有 bundleId 时，按名字模糊匹配
                 else if watched.bundleId == nil {
@@ -43,7 +46,11 @@ enum AppMatcher {
                 }
             }
         }
-        return MatchResult(matchedNames: hits)
+        let stale = watchedApps.compactMap { watched -> String? in
+            guard let bundleId = watched.bundleId, !foundBundleIDs.contains(bundleId) else { return nil }
+            return watched.name
+        }
+        return MatchResult(matchedNames: hits, staleBundleNames: stale)
     }
 
     /// 查找资源文件路径（用于图标等资源）

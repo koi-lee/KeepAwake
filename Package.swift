@@ -16,5 +16,10 @@ let package = Package(
                 .process("MenuBarIcon.png"),
             ]
         ),
+        .testTarget(
+            name: "KeepAwakeTests",
+            dependencies: ["KeepAwake"],
+            path: "Tests/KeepAwakeTests"
+        ),
     ]
 )
