@@ -1,6 +1,6 @@
 # KeepAwake
 
-> 一个轻量的 macOS 菜单栏工具：监控指定 App 是否运行，运行则阻止系统睡眠，退出后恢复。
+> 一个轻量的 macOS 菜单栏工具：让应用在线，Mac 不休眠；支持自动监控和手动保活会话。
 
 和 [Amphetamine](https://apps.apple.com/app/amphetamine/id937984704) 的思路类似，但更专注：**只做一件事**——目标在跑就阻止空闲睡眠，目标退了就放开。
 
@@ -12,10 +12,13 @@
 
 - 🌙 **菜单栏图标**：简洁月亮图标，黑白模板风格，跟随系统主题
 - 🔄 **自动检测**：监控 App 启动 / 退出，实时开关睡眠守护
-- 🔕 **静默通知**：激活 / 退出时发送系统通知（可关闭）
+- 🔔 **状态反馈与通知**：检查完成会显示即时结果；激活 / 退出时发送系统通知（可关闭），通知权限可从菜单直达系统设置
+- ⏱️ **手动保活会话**：支持 30 分钟、默认时长和一直保活，定时结束后自动恢复
+- 🔋 **电源安全策略**：支持低电量停止保活，以及仅连接电源时保活
 - ⚙️ **三种睡眠模式**：可切换「阻止系统睡眠」「阻止屏幕睡眠」或需要管理员授权的「合盖保活」
 - 🌐 **合盖网络保活**：合盖模式同时申请 macOS 网络客户端活跃断言，并记录本地网络状态便于排查中断
 - 📝 **图形化管理**：内置应用选择器，搜索勾选即可添加/移除监控目标
+- ⚙️ **图形化设置**：可设置开机自动启动、应用检查间隔、默认保活时长和网络日志上限
 - 📦 **DMG 一键打包**：开箱即用的安装包
 
 ---
@@ -67,6 +70,8 @@ open dist/KeepAwake.app
 
 ## 📝 配置监控目标
 
+首次启动时，KeepAwake 会默认开启“手动保活 · 一直运行”，让用户可以立即看到保活状态。用户可以在菜单栏的“手动保活会话”中停止；之后应用会保留用户自己的选择，不会在每次启动时强制重新开启。
+
 ### 图形化方式（推荐）
 
 点击菜单栏图标 → **管理监听应用…**，打开应用选择器：
@@ -75,20 +80,34 @@ open dist/KeepAwake.app
 - ☑️ **勾选**：勾选即加入监控列表
 - 💾 **保存**：自动写入配置并立即生效
 
+### 检查结果与通知
+
+点击菜单中的 **立即检查 (R)** 后，KeepAwake 会同时更新状态行、显示检查结果提示，并在通知权限已开启时发送系统通知。若通知未显示，打开菜单 → **通知**：
+
+1. 若显示“尚未允许”，点击 **允许 KeepAwake 通知…** 完成首次授权。
+2. 若显示“未开启”，点击 **打开系统通知设置…**，在“系统设置 → 通知 → KeepAwake”中打开允许通知。
+3. 即使系统通知被关闭，应用内的检查结果提示和状态行仍会显示。
+
 ### 手动编辑配置
 
-点击菜单栏 → **编辑配置文件…**，会打开 `~/.keepawake.json`：
+点击菜单栏 → **编辑配置文件…**，会打开应用配置文件：
+
+`~/Library/Application Support/KeepAwake/config.json`
+
+升级 V1 时，KeepAwake 会尝试把旧的 `~/.keepawake.json` 自动迁移到新位置。
 
 ```json
 {
+  "configVersion": 2,
   "watchedApps": [
-    { "name": "ChatGPT", "bundleId": "com.openai.chat" },
-    { "name": "ChatGPT", "bundleId": "com.openai.codex" },
-    { "name": "Claude",   "bundleId": "com.anthropic.claude" },
-    { "name": "AnyApp",   "bundleId": null }
+    { "name": "ChatGPT", "bundleId": "com.openai.chat" }
   ],
   "checkInterval": 5.0,
-  "showNotifications": true
+  "showNotifications": true,
+  "sleepMode": "system",
+  "defaultDurationMinutes": 60,
+  "lowBatteryThreshold": 20,
+  "onlyOnPower": false
 }
 ```
 
@@ -98,6 +117,10 @@ open dist/KeepAwake.app
 | `bundleId` | 精确匹配包 ID；设为 `null` 则只靠 `name` 匹配 |
 | `checkInterval` | 轮询间隔（秒），默认 5 秒 |
 | `showNotifications` | 是否发送激活 / 退出通知 |
+| `sleepMode` | `system`、`display` 或 `lid`，默认 `system` |
+| `defaultDurationMinutes` | 菜单中“默认时长”的分钟数，默认 60 |
+| `lowBatteryThreshold` | 电池低于该百分比时停止保活；设为 0 关闭，默认 20 |
+| `onlyOnPower` | 是否仅在连接电源时保活，默认 `false` |
 
 > 💡 查某个 App 的 bundleId：
 > ```bash
@@ -107,6 +130,17 @@ open dist/KeepAwake.app
 **⚠️ 注意**：部分机器上 ChatGPT 桌面端的包 ID 是 `com.openai.codex`（而非常见的 `com.openai.chat`）。本工具默认已同时包含两者，并通过「按名字 ChatGPT 模糊匹配」兜底。
 
 改完保存后，**重启 KeepAwake** 生效。
+
+### 图形化设置
+
+点击菜单栏 → **设置…**，可以直接调整：
+
+- 登录后自动启动 KeepAwake
+- 应用检查间隔（默认 5 秒）
+- 默认手动保活时长（默认 60 分钟）
+- 合盖网络诊断日志上限（默认 1 MB，超过后保留最新内容）
+
+监控列表中的目标如果找不到原 bundle ID，状态行会提示“重新识别”；打开“管理监听应用…”后重新勾选当前安装的应用即可更新识别信息。
 
 ---
 
@@ -118,7 +152,7 @@ open dist/KeepAwake.app
 | 屏幕睡眠 | 屏幕也不会熄灭 | 演示 / 录屏时使用 |
 | 合盖保活 | 阻止空闲睡眠和合盖睡眠，并申请网络客户端活跃断言 | 长时间运行 AI、下载和构建任务；首次启用需要管理员授权，建议连接电源 |
 
-合盖模式的网络诊断仅保存在 `~/Library/Logs/KeepAwake/network.log`，也可通过菜单中的“查看合盖网络诊断日志…”打开。它用于记录网络是否可用、连接接口和 DNS 状态，不会上传日志。
+合盖模式的网络诊断仅保存在应用专属的 Application Support 目录，也可通过菜单中的“查看合盖网络诊断日志…”打开。它用于记录网络是否可用、连接接口和 DNS 状态，不会上传日志。
 
 ---
 
@@ -134,6 +168,8 @@ KeepAwake/
 │       ├── main.swift         # 应用入口
 │       ├── AppDelegate.swift   # 菜单栏 + 状态管理
 │       ├── AppConfig.swift     # 配置模型 & 读写
+│       ├── Session.swift        # 手动保活会话与到期状态
+│       ├── PowerSafety.swift    # 电源状态读取与安全策略数据
 │       ├── AppMatcher.swift    # 应用匹配逻辑
 │       ├── SleepGuard.swift    # IOKit 睡眠断言
 │       ├── AppSelectorWindow.swift  # 应用选择器窗口
@@ -157,7 +193,7 @@ KeepAwake/
 
 ## 🔐 隐私说明
 
-KeepAwake 只在本机读取正在运行的应用列表，并把配置保存到 `~/.keepawake.json`。它不联网、不上传应用列表，也不收集使用数据。
+KeepAwake 只在本机读取正在运行的应用列表，并把配置保存到应用专属的 Application Support 目录。它不联网、不上传应用列表，也不收集使用数据。
 
 ---
 
@@ -168,6 +204,8 @@ KeepAwake 只在本机读取正在运行的应用列表，并把配置保存到 
 3. **系统睡眠 ≠ 屏幕睡眠**：默认模式只阻止系统睡眠，屏幕仍会按系统设置熄屏。切换到「屏幕睡眠」模式可阻止熄屏。
 4. 监控基于**应用在前台或后台运行**状态，切换用户时仍生效。
 5. **网络保活不等于单条连接永不掉线**：Wi-Fi、代理、运营商或远端服务仍可能中断 ChatGPT/Codex 等应用的长连接；可结合本地诊断日志定位网络状态变化。
+6. 手动会话只保存在当前运行进程内，退出 KeepAwake 后会自动释放睡眠断言，不会在下次启动时恢复。
+7. 新安装默认不监控任何应用，需要先在“管理监听应用…”中添加目标；升级 V1 配置会保留原有监控列表。
 
 ---
 

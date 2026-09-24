@@ -1,5 +1,7 @@
 # 发布说明
 
+当前本地版本：2.0.1（构建 19）。本次设置与诊断改动仍属于待发布工作区，未形成 GitHub Release 或公证包证据；发布前必须重新生成 DMG 并核验对应 Release 资产。
+
 ## 发布方式
 
 KeepAwake 是独立 macOS 应用，通过 GitHub Releases 分发 DMG，不使用服务器、Docker、数据库或运行时环境变量。
@@ -18,4 +20,3 @@ KeepAwake 是独立 macOS 应用，通过 GitHub Releases 分发 DMG，不使用
 ## 回滚
 
 保留上一版 GitHub Release；新版本出现问题时恢复到上一版安装包，不删除历史 Release。
-

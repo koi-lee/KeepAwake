@@ -11,11 +11,17 @@
 		000000000000000000000002 /* SleepGuard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000002 /* SleepGuard.swift */; };
 		000000000000000000000003 /* AppMatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000003 /* AppMatcher.swift */; };
 		000000000000000000000004 /* AppSelectorWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000004 /* AppSelectorWindow.swift */; };
+		00000000000000000000000F /* SessionStatusWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10000000000000000000000F /* SessionStatusWindow.swift */; };
+		000000000000000000000010 /* UsageGuideWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000010 /* UsageGuideWindow.swift */; };
 		000000000000000000000005 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000005 /* AppDelegate.swift */; };
 		000000000000000000000006 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000006 /* main.swift */; };
 		000000000000000000000007 /* MenuBarIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000007 /* MenuBarIcon.png */; };
 		000000000000000000000008 /* AppIcon.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000008 /* AppIcon.xcassets */; };
 		000000000000000000000009 /* LidSleepGuard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10000000000000000000000C /* LidSleepGuard.swift */; };
+		00000000000000000000000A /* Session.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10000000000000000000000D /* Session.swift */; };
+		00000000000000000000000B /* PowerSafety.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10000000000000000000000E /* PowerSafety.swift */; };
+		000000000000000000000011 /* LoginItemManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000011 /* LoginItemManager.swift */; };
+		000000000000000000000012 /* SettingsWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000012 /* SettingsWindow.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -23,6 +29,8 @@
 		100000000000000000000002 /* SleepGuard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepGuard.swift; sourceTree = "<group>"; };
 		100000000000000000000003 /* AppMatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppMatcher.swift; sourceTree = "<group>"; };
 		100000000000000000000004 /* AppSelectorWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSelectorWindow.swift; sourceTree = "<group>"; };
+		10000000000000000000000F /* SessionStatusWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStatusWindow.swift; sourceTree = "<group>"; };
+		100000000000000000000010 /* UsageGuideWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageGuideWindow.swift; sourceTree = "<group>"; };
 		100000000000000000000005 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		100000000000000000000006 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		100000000000000000000007 /* MenuBarIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = MenuBarIcon.png; sourceTree = "<group>"; };
@@ -31,6 +39,10 @@
 		10000000000000000000000A /* KeepAwake.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = KeepAwake.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		10000000000000000000000B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		10000000000000000000000C /* LidSleepGuard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LidSleepGuard.swift; sourceTree = "<group>"; };
+		10000000000000000000000D /* Session.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Session.swift; sourceTree = "<group>"; };
+		10000000000000000000000E /* PowerSafety.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PowerSafety.swift; sourceTree = "<group>"; };
+		100000000000000000000011 /* LoginItemManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginItemManager.swift; sourceTree = "<group>"; };
+		100000000000000000000012 /* SettingsWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsWindow.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -59,10 +71,16 @@
 			isa = PBXGroup;
 			children = (
 				100000000000000000000001 /* AppConfig.swift */,
+				10000000000000000000000D /* Session.swift */,
+				10000000000000000000000E /* PowerSafety.swift */,
+				100000000000000000000011 /* LoginItemManager.swift */,
+				100000000000000000000012 /* SettingsWindow.swift */,
 				100000000000000000000002 /* SleepGuard.swift */,
 				10000000000000000000000C /* LidSleepGuard.swift */,
 				100000000000000000000003 /* AppMatcher.swift */,
 				100000000000000000000004 /* AppSelectorWindow.swift */,
+				10000000000000000000000F /* SessionStatusWindow.swift */,
+				100000000000000000000010 /* UsageGuideWindow.swift */,
 				100000000000000000000005 /* AppDelegate.swift */,
 				100000000000000000000006 /* main.swift */,
 				100000000000000000000007 /* MenuBarIcon.png */,
@@ -158,10 +176,16 @@
 			buildActionMask = 2147483647;
 			files = (
 				000000000000000000000001 /* AppConfig.swift in Sources */,
+				00000000000000000000000A /* Session.swift in Sources */,
+				00000000000000000000000B /* PowerSafety.swift in Sources */,
+				000000000000000000000011 /* LoginItemManager.swift in Sources */,
+				000000000000000000000012 /* SettingsWindow.swift in Sources */,
 				000000000000000000000002 /* SleepGuard.swift in Sources */,
 				000000000000000000000009 /* LidSleepGuard.swift in Sources */,
 				000000000000000000000003 /* AppMatcher.swift in Sources */,
 				000000000000000000000004 /* AppSelectorWindow.swift in Sources */,
+				00000000000000000000000F /* SessionStatusWindow.swift in Sources */,
+				000000000000000000000010 /* UsageGuideWindow.swift in Sources */,
 				000000000000000000000005 /* AppDelegate.swift in Sources */,
 				000000000000000000000006 /* main.swift in Sources */,
 			);
@@ -200,8 +224,8 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
-				SDKROOT = macosx;
-				SWIFT_COMPILATION_MODE = wholemodule;
+					SDKROOT = macosx;
+					SWIFT_COMPILATION_MODE = wholemodule;
 		};
 			name = Release;
 		};
@@ -212,7 +236,7 @@
 				CODE_SIGN_ENTITLEMENTS = KeepAwake.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 19;
 				DEVELOPMENT_TEAM = 4BHPD976HX;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -221,7 +245,7 @@
 				INFOPLIST_FILE = Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 2.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.starshoreai.keepawake;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -234,9 +258,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = KeepAwake.entitlements;
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_IDENTITY = "Apple Distribution: ZEAN LI (4BHPD976HX)";
+				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 19;
 				DEVELOPMENT_TEAM = 4BHPD976HX;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -245,7 +270,7 @@
 				INFOPLIST_FILE = Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 2.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.starshoreai.keepawake;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;

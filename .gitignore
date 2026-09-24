@@ -32,3 +32,6 @@ dist/
 
 # Local release notes (do not publish)
 /docs/AppStore/KeepAwake-AppStore-上架流程.md
+.gstack/
+.swiftpm/
+**/.DS_Store
