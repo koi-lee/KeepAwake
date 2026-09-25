@@ -1,6 +1,8 @@
 # 发布说明
 
-当前本地版本：2.0.1（构建 19）。本地已生成 Developer ID 签名并完成 Apple 公证的 DMG；该公证包尚未上传到新的 GitHub Release 或 App Store 版本。
+当前待发布版本：2.0.3（构建 21）。Build 21 已由 Xcode 上传到 App Store Connect，等待 Apple 处理；尚未确认处理完成、关联到版本页面或提交审核。独立分发 DMG 尚未生成：本机 `codesign` 在调用 `Developer ID Application: ZEAN LI (4BHPD976HX)` 私钥时持续等待，需先解决钥匙串授权，再签名和公证本版本 DMG。
+
+App Store Connect 已拒收 2.0.1（构建 20）：2.0.1 版本线已关闭，且已批准版本为 2.0.2；构建号 20 也已被使用。因此本次发布版本提升至 2.0.3（构建 21）。
 
 ## 发布方式
 
