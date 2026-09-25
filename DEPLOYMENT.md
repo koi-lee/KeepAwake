@@ -1,6 +1,6 @@
 # 发布说明
 
-当前本地版本：2.0.1（构建 19）。本次设置与诊断改动仍属于待发布工作区，未形成 GitHub Release 或公证包证据；发布前必须重新生成 DMG 并核验对应 Release 资产。
+当前本地版本：2.0.1（构建 19）。本地已生成 Developer ID 签名并完成 Apple 公证的 DMG；该公证包尚未上传到新的 GitHub Release 或 App Store 版本。
 
 ## 发布方式
 
@@ -53,7 +53,7 @@ Developer ID Application: ZEAN LI (4BHPD976HX)
 - `spctl` 显示 `Unnotarized Developer ID`：表示已使用 Developer ID，但尚未完成 Apple 公证。
 - `xcrun stapler validate dist/KeepAwake.dmg` 通过：表示公证票据已装订到 DMG；失败或提示没有 ticket，不能写成“已公证”。
 
-本次故障的根因是：`ZEAN LI` 证书可以被系统识别，但 `codesign` 调用对应私钥时卡住；修复钥匙串访问后，App 签名和 DMG 创建均恢复正常。后续正式发布前仍需单独完成 Apple 公证和安装验证。
+本次故障的根因是：`ZEAN LI` 证书可以被系统识别，但 `codesign` 调用对应私钥时卡住；修复钥匙串访问后，App 签名和 DMG 创建均恢复正常。本次公证提交 `001ab3ae-5ec8-4801-8cd1-c4739696377b` 已获 Apple 接受，票据已装订，并通过挂载后 Gatekeeper 验证；后续发布时仍需核对上传的 Release 资产就是这份已公证包。
 
 发布前确认：
 
