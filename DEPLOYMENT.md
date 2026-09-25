@@ -1,6 +1,6 @@
 # 发布说明
 
-当前待发布版本：2.0.3（构建 21）。Build 21 已由 Xcode 上传到 App Store Connect；处理状态、关联到版本页面和审核提交状态仍待确认。独立分发 DMG 已使用 `Developer ID Application: ZEAN LI (4BHPD976HX)` 签名，并于 2026-09-25 获 Apple 公证接受，票据已装订，挂载后 Gatekeeper 验证通过。当前 DMG SHA-256：`d6423b5b11c5c1b71bbd9e8e786904ca487cee27646f04e09a56c8be1995003d`。
+当前待发布版本：2.0.3（构建 21）。Build 21 已由 Xcode 上传到 App Store Connect；处理状态、关联到版本页面和审核提交状态仍待确认。供目标电脑验证的独立分发 DMG 已使用 `Developer ID Application: ZEAN LI (4BHPD976HX)` 签名，并于 2026-09-25 获 Apple 公证接受，票据已装订，挂载后 Gatekeeper 验证通过。当前 DMG SHA-256：`5b67616ff7a3c93f574ed53b8bb3d3e5b96c19a746ee71f4b69e6976dce94b36`。
 
 App Store Connect 已拒收 2.0.1（构建 20）：2.0.1 版本线已关闭，且已批准版本为 2.0.2；构建号 20 也已被使用。因此本次发布版本提升至 2.0.3（构建 21）。
 
@@ -55,7 +55,7 @@ Developer ID Application: ZEAN LI (4BHPD976HX)
 - `spctl` 显示 `Unnotarized Developer ID`：表示已使用 Developer ID，但尚未完成 Apple 公证。
 - `xcrun stapler validate dist/KeepAwake.dmg` 通过：表示公证票据已装订到 DMG；失败或提示没有 ticket，不能写成“已公证”。
 
-本次故障的根因是：`ZEAN LI` 证书可被系统识别，但其私钥访问控制未允许 `codesign` 正常使用。将 Keychain Access 中目标私钥的访问控制配置为允许签名工具访问后，主程序与完整 App 均完成签名，DMG 创建成功。完整 Universal App 签名耗时明显长于单文件探测，短时间无输出不代表进程挂死；应检查 `codesign` 进程并给予足够时间。本次公证提交 `ed31c2b4-d8ad-43a6-a232-7e0a7240cac3` 已获 Apple 接受，DMG 票据已装订，挂载后 `spctl` 返回 `accepted / source=Notarized Developer ID`。发布时仍需核对上传的 Release 资产 SHA-256 与上述值一致。
+本次故障的根因是：`ZEAN LI` 证书可被系统识别，但其私钥访问控制未允许 `codesign` 正常使用。将 Keychain Access 中目标私钥的访问控制配置为允许签名工具访问后，主程序与完整 App 均完成签名，DMG 创建成功。完整 Universal App 签名耗时明显长于单文件探测，短时间无输出不代表进程挂死；应检查 `codesign` 进程并给予足够时间。本次重新生成的 DMG 公证提交 `c80075ff-8053-4caf-b561-334b61005110` 已获 Apple 接受，票据已装订，挂载后 `spctl` 返回 `accepted / source=Notarized Developer ID`。发布时仍需核对上传的 Release 资产 SHA-256 与上述值一致。
 
 发布前确认：
 
