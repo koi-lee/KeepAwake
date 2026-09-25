@@ -95,6 +95,7 @@ final class SleepGuard {
     private(set) var isActive: Bool = false
     private let lidGuard = LidSleepGuard()
     private let networkLogger = NetworkPathLogger()
+    private(set) var lastLidActivationError: String?
 
     /// 阻止系统空闲睡眠（系统不会因空闲而进入睡眠，但合盖仍会睡眠）
     @discardableResult
@@ -110,10 +111,12 @@ final class SleepGuard {
             if keepLidAwake {
                 do {
                     try lidGuard.start()
+                    lastLidActivationError = nil
                 } catch {
                     IOPMAssertionRelease(assertionID)
                     assertionID = 0
                     print("[KeepAwake] 合盖保活授权失败: \(error)")
+                    lastLidActivationError = error.localizedDescription
                     return false
                 }
                 let networkResult = IOPMAssertionCreateWithName(
@@ -155,10 +158,12 @@ final class SleepGuard {
             if keepLidAwake {
                 do {
                     try lidGuard.start()
+                    lastLidActivationError = nil
                 } catch {
                     IOPMAssertionRelease(assertionID)
                     assertionID = 0
                     print("[KeepAwake] 合盖保活授权失败: \(error)")
+                    lastLidActivationError = error.localizedDescription
                     return false
                 }
             }

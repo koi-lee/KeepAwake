@@ -1,12 +1,12 @@
 import Foundation
 
 private enum LidSleepGuardError: LocalizedError {
-    case authorizationFailed
+    case authorizationFailed(String)
     case authorizationTimedOut
 
     var errorDescription: String? {
         switch self {
-        case .authorizationFailed: return "管理员授权未完成或 pmset 启动失败"
+        case .authorizationFailed(let detail): return detail
         case .authorizationTimedOut: return "等待管理员授权超时"
         }
     }
@@ -52,9 +52,10 @@ final class LidSleepGuard {
             stop()
             throw LidSleepGuardError.authorizationTimedOut
         }
+        let termination = process.terminationStatus
         self.process = nil
         discardSessionFiles()
-        throw LidSleepGuardError.authorizationFailed
+        throw LidSleepGuardError.authorizationFailed(Self.failureMessage(for: termination))
     }
 
     func stop() {
@@ -94,5 +95,12 @@ final class LidSleepGuard {
 
     private func shellQuote(_ value: String) -> String {
         "'\(value.replacingOccurrences(of: "'", with: "'\\''"))'"
+    }
+
+    static func failureMessage(for terminationStatus: Int32) -> String {
+        guard terminationStatus != 0 else {
+            return "管理员授权命令已结束，但合盖保活未能启动。请重试；如果仍失败，请检查 macOS 是否允许 KeepAwake 请求管理员权限。"
+        }
+        return "管理员授权未完成（授权对话框被取消或系统命令执行失败，退出码：\(terminationStatus)）。请在系统密码对话框中输入 Mac 登录密码并点击“好”，不要输入 Apple 账户密码；如果未出现密码框，请检查系统是否拦截了授权请求。"
     }
 }

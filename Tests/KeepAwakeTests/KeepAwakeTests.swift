@@ -2,6 +2,21 @@ import XCTest
 @testable import KeepAwake
 
 final class KeepAwakeTests: XCTestCase {
+    func testLidAuthorizationFailureExplainsPasswordAndCancellation() {
+        let message = LidSleepGuard.failureMessage(for: 1)
+
+        XCTAssertTrue(message.contains("Mac 登录密码"))
+        XCTAssertTrue(message.contains("被取消"))
+        XCTAssertTrue(message.contains("退出码：1"))
+    }
+
+    func testLidAuthorizationFailureDistinguishesSuccessfulCommandWithoutHandshake() {
+        let message = LidSleepGuard.failureMessage(for: 0)
+
+        XCTAssertTrue(message.contains("未能启动"))
+        XCTAssertFalse(message.contains("被取消"))
+    }
+
     func testV1ConfigDecodesWithV2Defaults() throws {
         let data = #"""
         {

@@ -1038,7 +1038,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         updateStatusText()
         let alert = NSAlert()
         alert.messageText = "未能启用合盖保活"
-        alert.informativeText = "管理员授权窗口没有完成。请点击“重新授权”，KeepAwake 会再次将授权请求置于前台；也可以取消并继续使用“阻止系统睡眠”模式。"
+        let reason = sleepGuard.lastLidActivationError ?? "管理员授权未完成。"
+        alert.informativeText = "\(reason)\n\n请点击“重新授权”，并在系统密码对话框中输入这台 Mac 的登录密码；也可以取消并继续使用“阻止系统睡眠”模式。"
         alert.alertStyle = .warning
         alert.addButton(withTitle: "重新授权")
         alert.addButton(withTitle: "取消")
