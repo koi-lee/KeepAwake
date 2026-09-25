@@ -156,6 +156,12 @@ open dist/KeepAwake.app
 
 ---
 
+## 🌐 官网与来源链接
+
+- 官网介绍页：[KeepAwake｜macOS 防睡眠与应用监控工具](https://starshoreai.com/keepawake?utm_source=github&utm_medium=readme&utm_campaign=traffic_growth_202609)
+- 社交渠道分享时使用官网中转页，按实际渠道替换 `utm_source`，并使用 `utm_medium=social&utm_campaign=traffic_growth_202609`。
+- App Store 商品页保持原始链接，不追加 UTM 参数；需要区分商店来源时先链接到官网介绍页。
+
 ## 📁 项目结构
 
 ```
