@@ -7,6 +7,7 @@
 ## 来源与核验
 
 - GitHub `main`：`6a29c4832e0cdec0058399dca307fbc37d7bcafd`；公开原始 README 与本地基线一致。
+- 本次文档发布通过 [PR #1](https://github.com/koi-lee/KeepAwake/pull/1) 跟踪。
 - GitHub [最新正式 Release](https://github.com/koi-lee/KeepAwake/releases/latest)：v2.0.2（发布于 2026-09-20），唯一资产 `KeepAwake.dmg`，大小 2,986,456 字节。Release 正文称 DMG 使用 Developer ID 签名、未经过 Apple 公证。
 - Apple 官方 [App Store 产品页](https://apps.apple.com/cn/app/keepawake/id6799152235?mt=12&uo=4) 的公开 lookup API 回传版本 2.0.3（macOS 13.0+）。Apple 商店版 2.0.3 与 GitHub 独立 DMG 2.0.2 是两个渠道各自的版本，不应混称。
 - GitHub API 报告资产 SHA-256：`d3ec567800e7427d4213bfee5f3a39c6ad887bf270e6ed475d161af18f675f56`；下载所得摘要完全一致；`hdiutil verify` 返回磁盘映像校验有效。
