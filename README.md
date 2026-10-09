@@ -27,27 +27,20 @@
 
 ### 下载安装
 
-1. 从 [Releases](https://github.com/koi-lee/KeepAwake/releases) 下载最新 `KeepAwake.dmg`
+1. 从 [最新 GitHub Release](https://github.com/koi-lee/KeepAwake/releases/latest) 下载 `KeepAwake.dmg`，或使用[直接下载链接](https://github.com/koi-lee/KeepAwake/releases/latest/download/KeepAwake.dmg)。截至 2026-10-09，GitHub 独立版最新公开版本是 **2.0.2**，支持 macOS 13+ 与 Apple Silicon / Intel（Universal 2）；App Store 版是 **2.0.3**，两个渠道版本独立。2.0.3（Build 21）的独立 DMG 尚未发布到 GitHub Release。
 2. 双击挂载，拖拽 `KeepAwake.app` 到 `Applications`
-3. 首次打开：系统设置 → 隐私与安全性 → 仍要打开
+3. 从菜单栏点击 KeepAwake 图标打开主菜单；首次使用可选“快速上手 / 使用说明…”，通过“管理监听应用…”添加要监控的应用
 
 ### 首次打开被 macOS 拦截
 
-KeepAwake 当前使用 Ad-hoc 签名，尚未经过 Apple 公证，因此首次打开时 macOS 可能提示“无法验证开发者”或阻止运行。这不代表应用已经损坏。
+公开 Release v2.0.2 的说明注明：DMG 使用 Developer ID 签名，但尚未经过 Apple 公证，因此首次打开时 macOS 可能提示无法验证或阻止运行。此说明只针对当前这版公开 DMG；后续版本的签名和公证状态以各自 Release 说明为准。
 
-推荐按以下顺序处理：
+如果安装包来自上面的 KeepAwake 官方 GitHub Release，且你确认要继续打开：
 
-1. 确认已将 `KeepAwake.app` 从 DMG 拖入“应用程序”，不要直接在磁盘镜像中运行。
-2. 在 Finder 的“应用程序”中找到 KeepAwake，按住 Control 点击（或右键点击）→ **打开** → 再次选择 **打开**。
-3. 如果仍被拦截，进入 **系统设置 → 隐私与安全性**，向下找到 KeepAwake 的拦截提示，点击 **仍要打开**，验证密码或 Touch ID 后再次确认。
+1. 在 Finder“应用程序”中找到 KeepAwake，按住 Control 点击（或右键点击）→ **打开**，并在确认提示中再次选择 **打开**。
+2. 如果没有这个入口，或仍被拦截，打开 **系统设置 → 隐私与安全性**，在安全性提示中选择 **仍要打开**，按系统提示确认。
 
-如果以上入口没有出现，可在确认安装包来自本仓库官方 Release 后执行：
-
-```bash
-xattr -dr com.apple.quarantine /Applications/KeepAwake.app
-```
-
-该命令只会移除 KeepAwake 的下载隔离标记，不会修改应用功能。请勿对来源不明的 App 使用此命令。
+不要用命令移除隔离属性或关闭 Gatekeeper 来绕过系统检查。Apple 的[安全打开 Mac App 指引](https://support.apple.com/zh-cn/102445)说明了确认来源可信后允许打开的标准路径；来源不明或无法确认完整性的应用不要继续打开。
 
 ### 编译运行
 
